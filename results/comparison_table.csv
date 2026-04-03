@@ -1,0 +1,3 @@
+id,framework,gemini_codebleu,gemini_pass1,llama_codebleu,llama_pass1,mixtral_codebleu,mixtral_pass1,agent_codebleu
+web_001,Flask,,,0.5296,1.0,0.4664,1.0,
+web_002,FastAPI,,,0.5068,1.0,0.5058,0.0,

@@ -9,10 +9,5 @@ build/
 .venv/
 venv/
 *.log
-data/nim_outputs/
-data/gemini_outputs/
-data/scores/
-data/agent_outputs/
-data/benchmark.json
-results/
-!results/.gitkeep
+
+

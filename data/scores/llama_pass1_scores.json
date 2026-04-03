@@ -1,0 +1,18 @@
+[
+  {
+    "id": "web_001",
+    "model": "meta/llama-3.1-70b-instruct",
+    "framework": "Flask",
+    "n_passed": 10,
+    "n_total": 10,
+    "pass_at_1": 1.0
+  },
+  {
+    "id": "web_002",
+    "model": "meta/llama-3.1-70b-instruct",
+    "framework": "Flask",
+    "n_passed": 10,
+    "n_total": 10,
+    "pass_at_1": 1.0
+  }
+]

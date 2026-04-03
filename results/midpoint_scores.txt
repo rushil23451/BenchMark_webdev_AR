@@ -1,0 +1,19 @@
+=================================================================
+WEB-LLM-BENCHMARK — Results Summary
+=================================================================
+
+Overall Mean Scores
+----------------------------------------
+llama_codebleu      0.5182
+llama_pass1         1.0000
+mixtral_codebleu    0.4861
+mixtral_pass1       0.5000
+
+Mean Scores by Framework
+----------------------------------------
+           llama_codebleu  llama_pass1  mixtral_codebleu  mixtral_pass1
+framework                                                              
+FastAPI            0.5068          1.0            0.5058            0.0
+Flask              0.5296          1.0            0.4664            1.0
+
+=================================================================

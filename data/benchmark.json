@@ -1,0 +1,60 @@
+[
+  {
+    "id": "web_001",
+    "domain": "Web Programming",
+    "language": "Python",
+    "framework": "Flask",
+    "prompt": "Write a Flask REST API with JWT authentication that provides the following endpoints:\n1. POST /register \u2014 accepts JSON {\"username\": str, \"password\": str}, hashes the password with bcrypt, stores the user, returns {\"message\": \"User registered\", \"id\": <user_id>} with status 201.\n2. POST /login \u2014 verifies credentials, returns {\"token\": <jwt_token>} with status 200, or {\"error\": \"Invalid credentials\"} with status 401.\n3. GET /profile \u2014 requires Bearer token in Authorization header, returns {\"id\": int, \"username\": str} for the authenticated user, or 401 if token is missing/invalid.\nUse an in-memory dict for storage. Do not use a database. Import only Flask, flask_jwt_extended, and werkzeug.security.",
+    "reference_code": "from flask import Flask, request, jsonify\nfrom flask_jwt_extended import (\n    JWTManager, create_access_token, jwt_required, get_jwt_identity\n)\nfrom werkzeug.security import generate_password_hash, check_password_hash\n\napp = Flask(__name__)\napp.config['JWT_SECRET_KEY'] = 'super-secret-change-me'\njwt = JWTManager(app)\n\nusers = {}   # {id: {username, password_hash}}\n_next_id = 1\n\n\n@app.route('/register', methods=['POST'])\ndef register():\n    data = request.get_json()\n    username = data.get('username', '').strip()\n    password = data.get('password', '')\n    if not username or not password:\n        return jsonify({'error': 'username and password required'}), 400\n    if any(u['username'] == username for u in users.values()):\n        return jsonify({'error': 'Username already taken'}), 409\n\n    global _next_id\n    uid = _next_id\n    _next_id += 1\n    users[uid] = {'username': username,\n                  'password_hash': generate_password_hash(password)}\n    return jsonify({'message': 'User registered', 'id': uid}), 201\n\n\n@app.route('/login', methods=['POST'])\ndef login():\n    data = request.get_json()\n    username = data.get('username', '')\n    password = data.get('password', '')\n    user = next((u for u in users.values() if u['username'] == username), None)\n    if not user or not check_password_hash(user['password_hash'], password):\n        return jsonify({'error': 'Invalid credentials'}), 401\n    token = create_access_token(identity=username)\n    return jsonify({'token': token}), 200\n\n\n@app.route('/profile', methods=['GET'])\n@jwt_required()\ndef profile():\n    current_user = get_jwt_identity()\n    uid, user = next(\n        ((uid, u) for uid, u in users.items() if u['username'] == current_user),\n        (None, None)\n    )\n    if not user:\n        return jsonify({'error': 'User not found'}), 404\n    return jsonify({'id': uid, 'username': user['username']}), 200\n\n\nif __name__ == '__main__':\n    app.run(debug=True)\n",
+    "scores": {
+      "gemini-1.5-flash": {
+        "web_codebleu": null,
+        "pass_at_1": null,
+        "kw_f1": null
+      },
+      "meta/llama-3.1-70b-instruct": {
+        "web_codebleu": 0.5296,
+        "pass_at_1": 1.0,
+        "kw_f1": 0.9286
+      },
+      "mistralai/mixtral-8x7b-instruct-v0.1": {
+        "web_codebleu": 0.4664,
+        "pass_at_1": 1.0,
+        "kw_f1": 0.9286
+      },
+      "agent_system": {
+        "web_codebleu": null,
+        "pass_at_1": null
+      }
+    }
+  },
+  {
+    "id": "web_002",
+    "domain": "Web Programming",
+    "language": "Python",
+    "framework": "FastAPI",
+    "prompt": "Write a FastAPI application that implements a paginated, filterable TODO task API:\n1. Use a Pydantic BaseModel called Task with fields: id (int), title (str), description (str, optional), status (str, default='pending'), created_at (str).\n2. POST /tasks \u2014 accepts {\"title\": str, \"description\": str | None} body, auto-assigns an integer id and ISO-8601 created_at timestamp, sets status='pending', returns the created Task with status 201.\n3. GET /tasks \u2014 returns a list of Task objects. Supports optional query parameters: status (filter by status string) and page/page_size for pagination (default page=1, page_size=10). Returns {\"items\": [...], \"total\": int, \"page\": int, \"page_size\": int}.\n4. PATCH /tasks/{task_id}/status \u2014 accepts {\"status\": str} body, updates the task status, returns the updated Task or 404 if not found.\nStore tasks in an in-memory list. Add CORS middleware allowing all origins.",
+    "reference_code": "from datetime import datetime, timezone\nfrom typing import List, Optional\n\nfrom fastapi import FastAPI, HTTPException, Query\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom pydantic import BaseModel\n\napp = FastAPI(title='TODO Service')\n\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=['*'],\n    allow_credentials=True,\n    allow_methods=['*'],\n    allow_headers=['*'],\n)\n\n# \u2500\u2500 Models \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nclass Task(BaseModel):\n    id: int\n    title: str\n    description: Optional[str] = None\n    status: str = 'pending'\n    created_at: str\n\n\nclass TaskCreate(BaseModel):\n    title: str\n    description: Optional[str] = None\n\n\nclass StatusUpdate(BaseModel):\n    status: str\n\n\nclass PaginatedTasks(BaseModel):\n    items: List[Task]\n    total: int\n    page: int\n    page_size: int\n\n\n# \u2500\u2500 In-memory store \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ntasks: List[Task] = []\n_next_id: int = 1\n\n\n# \u2500\u2500 Endpoints \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n@app.post('/tasks', response_model=Task, status_code=201)\ndef create_task(body: TaskCreate):\n    global _next_id\n    task = Task(\n        id=_next_id,\n        title=body.title,\n        description=body.description,\n        status='pending',\n        created_at=datetime.now(timezone.utc).isoformat(),\n    )\n    tasks.append(task)\n    _next_id += 1\n    return task\n\n\n@app.get('/tasks', response_model=PaginatedTasks)\ndef list_tasks(\n    status: Optional[str] = Query(None, description='Filter by task status'),\n    page: int = Query(1, ge=1),\n    page_size: int = Query(10, ge=1, le=100),\n):\n    filtered = [t for t in tasks if status is None or t.status == status]\n    total = len(filtered)\n    start = (page - 1) * page_size\n    end   = start + page_size\n    return PaginatedTasks(\n        items=filtered[start:end],\n        total=total,\n        page=page,\n        page_size=page_size,\n    )\n\n\n@app.patch('/tasks/{task_id}/status', response_model=Task)\ndef update_status(task_id: int, body: StatusUpdate):\n    for task in tasks:\n        if task.id == task_id:\n            task.status = body.status\n            return task\n    raise HTTPException(status_code=404, detail=f'Task {task_id} not found')\n",
+    "scores": {
+      "gemini-1.5-flash": {
+        "web_codebleu": null,
+        "pass_at_1": null,
+        "kw_f1": null
+      },
+      "meta/llama-3.1-70b-instruct": {
+        "web_codebleu": 0.5068,
+        "pass_at_1": 1.0,
+        "kw_f1": 0.9524
+      },
+      "mistralai/mixtral-8x7b-instruct-v0.1": {
+        "web_codebleu": 0.5058,
+        "pass_at_1": 0.0,
+        "kw_f1": 0.9524
+      },
+      "agent_system": {
+        "web_codebleu": null,
+        "pass_at_1": null
+      }
+    }
+  }
+]
