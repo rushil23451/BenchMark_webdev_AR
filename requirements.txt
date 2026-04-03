@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Web-LLM-Benchmark — requirements.txt
+# Python 3.11+  |  Install: pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Core metric ──────────────────────────────────────────────────────────────
+codebleu>=0.7.0            # Base CodeBLEU (ngram + weighted_ngram + syntax + dataflow)
+tree-sitter>=0.21.0        # AST parsing backend used by codebleu
+tree-sitter-python>=0.21.0 # Python grammar for tree-sitter
+
+# ── LLM / API ─────────────────────────────────────────────────────────────────
+openai>=1.30.0             # OpenAI-compatible SDK → NVIDIA NIM
+python-dotenv>=1.0.0       # .env loader for NIM_API_KEY
+
+# ── Data handling ─────────────────────────────────────────────────────────────
+pandas>=2.2.0              # comparison_table.csv / summary stats
+
+# ── Visualisation (bonus Sprint 5) ───────────────────────────────────────────
+matplotlib>=3.8.0          # grouped bar charts
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+tqdm>=4.66.0               # progress bars during NIM batch runs

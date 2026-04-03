@@ -1,0 +1,10 @@
+[
+  {
+    "id": "web_001",
+    "prompt": "Write a Flask REST API with JWT authentication that provides the following endpoints:\n1. POST /register \u2014 accepts JSON {\"username\": str, \"password\": str}, hashes the password with bcrypt, stores the user, returns {\"message\": \"User registered\", \"id\": <user_id>} with status 201.\n2. POST /login \u2014 verifies credentials, returns {\"token\": <jwt_token>} with status 200, or {\"error\": \"Invalid credentials\"} with status 401.\n3. GET /profile \u2014 requires Bearer token in Authorization header, returns {\"id\": int, \"username\": str} for the authenticated user, or 401 if token is missing/invalid.\nUse an in-memory dict for storage. Do not use a database. Import only Flask, flask_jwt_extended, and werkzeug.security."
+  },
+  {
+    "id": "web_002",
+    "prompt": "Write a FastAPI application that implements a paginated, filterable TODO task API:\n1. Use a Pydantic BaseModel called Task with fields: id (int), title (str), description (str, optional), status (str, default='pending'), created_at (str).\n2. POST /tasks \u2014 accepts {\"title\": str, \"description\": str | None} body, auto-assigns an integer id and ISO-8601 created_at timestamp, sets status='pending', returns the created Task with status 201.\n3. GET /tasks \u2014 returns a list of Task objects. Supports optional query parameters: status (filter by status string) and page/page_size for pagination (default page=1, page_size=10). Returns {\"items\": [...], \"total\": int, \"page\": int, \"page_size\": int}.\n4. PATCH /tasks/{task_id}/status \u2014 accepts {\"status\": str} body, updates the task status, returns the updated Task or 404 if not found.\nStore tasks in an in-memory list. Add CORS middleware allowing all origins."
+  }
+]
